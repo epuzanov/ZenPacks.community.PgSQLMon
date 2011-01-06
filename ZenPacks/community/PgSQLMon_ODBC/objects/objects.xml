@@ -9,36 +9,6 @@ PostgreSQL Database Template
 ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase
 </property>
 <tomanycont id='datasources'>
-<object id='sizeUsed' module='ZenPacks.community.ZenODBC.datasources.OdbcDataSource' class='OdbcDataSource'>
-<property select_variable="sourcetypes" type="selection" id="sourcetype" mode="w" >
-ODBC
-</property>
-<property type="boolean" id="enabled" mode="w" >
-True
-</property>
-<property type="int" id="severity" mode="w" >
-3
-</property>
-<property type="int" id="cycletime" mode="w" >
-300
-</property>
-<property type="string" id="cs" mode="w" >
-${here/zPgSqlConnectionString};Servername=${here/manageIp};Database=template1;UID=${here/zPgSqlUsername};PWD=${here/zPgSqlPassword}
-</property>
-<property type="string" id="sql" mode="w" >
-SELECT pg_database_size(datname) as sizeUsed FROM pg_database WHERE datname='${here/dbname}';
-</property>
-<tomanycont id='datapoints'>
-<object id='sizeUsed' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
-<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
-GAUGE
-</property>
-<property type="boolean" id="isrow" mode="w" >
-True
-</property>
-</object>
-</tomanycont>
-</object>
 <object id='statDb' module='ZenPacks.community.ZenODBC.datasources.OdbcDataSource' class='OdbcDataSource'>
 <property select_variable="sourcetypes" type="selection" id="sourcetype" mode="w" >
 ODBC
@@ -56,7 +26,17 @@ True
 ${here/zPgSqlConnectionString};Servername=${here/manageIp};Database=template1;UID=${here/zPgSqlUsername};PWD=${here/zPgSqlPassword}
 </property>
 <property type="string" id="sql" mode="w" >
-SELECT blks_hit, blks_read, numbackends, xact_commit, xact_rollback FROM pg_stat_database where datname='${here/dbname}';
+SELECT
+    pg_stat_get_db_blocks_hit(D.oid) AS blks_hit,
+    pg_stat_get_db_blocks_fetched(D.oid) -
+        pg_stat_get_db_blocks_hit(D.oid) AS blks_read,
+    pg_stat_get_db_numbackends(D.oid) AS numbackends,
+    pg_database_size(datname)::float AS sizeUsed,
+    pg_stat_get_db_xact_commit(D.oid) AS xact_commit,
+    pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback,
+    D.datname AS datname
+FROM pg_database D
+WHERE datname='${here/dbname}'
 </property>
 <tomanycont id='datapoints'>
 <object id='blks_hit' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
@@ -83,6 +63,18 @@ GAUGE
 True
 </property>
 </object>
+<object id='sizeUsed' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
+<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
+GAUGE
+</property>
+<property type="boolean" id="isrow" mode="w" >
+True
+</property>
+<tomanycont id='aliases'>
+<object id='sizeused' module='Products.ZenModel.RRDDataPointAlias' class='RRDDataPointAlias'>
+</object>
+</tomanycont>
+</object>
 <object id='xact_commit' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
 <property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
 DERIVE
@@ -101,6 +93,302 @@ True
 </object>
 </tomanycont>
 </object>
+</tomanycont>
+<tomanycont id='graphDefs'>
+<object id='PostgreSQL Connections' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<property type="int" id="height" mode="w" >
+100
+</property>
+<property type="int" id="width" mode="w" >
+500
+</property>
+<property type="string" id="units" mode="w" >
+connections
+</property>
+<property type="boolean" id="log" mode="w" >
+False
+</property>
+<property type="boolean" id="base" mode="w" >
+False
+</property>
+<property type="int" id="miny" mode="w" >
+0
+</property>
+<property type="int" id="maxy" mode="w" >
+-1
+</property>
+<property type="boolean" id="hasSummary" mode="w" >
+True
+</property>
+<property type="long" id="sequence" mode="w" >
+1
+</property>
+<tomanycont id='graphPoints'>
+<object id='numbackends' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Connections
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statDb_numbackends
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+</tomanycont>
+</object>
+<object id='PostgreSQL Database Size' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<property type="int" id="height" mode="w" >
+100
+</property>
+<property type="int" id="width" mode="w" >
+500
+</property>
+<property type="string" id="units" mode="w" >
+bytes
+</property>
+<property type="boolean" id="log" mode="w" >
+False
+</property>
+<property type="boolean" id="base" mode="w" >
+True
+</property>
+<property type="int" id="miny" mode="w" >
+0
+</property>
+<property type="int" id="maxy" mode="w" >
+-1
+</property>
+<property type="boolean" id="hasSummary" mode="w" >
+True
+</property>
+<tomanycont id='graphPoints'>
+<object id='sizeUsed' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Total
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statDb_sizeUsed
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+</tomanycont>
+</object>
+<object id='PostgreSQL Disk Read' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<property type="int" id="height" mode="w" >
+100
+</property>
+<property type="int" id="width" mode="w" >
+500
+</property>
+<property type="string" id="units" mode="w" >
+blocks/sec
+</property>
+<property type="boolean" id="log" mode="w" >
+False
+</property>
+<property type="boolean" id="base" mode="w" >
+False
+</property>
+<property type="int" id="miny" mode="w" >
+0
+</property>
+<property type="int" id="maxy" mode="w" >
+-1
+</property>
+<property type="boolean" id="hasSummary" mode="w" >
+True
+</property>
+<property type="long" id="sequence" mode="w" >
+3
+</property>
+<tomanycont id='graphPoints'>
+<object id='blks_hit' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Hits
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statDb_blks_hit
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+<object id='blks_read' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+1
+</property>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Reads
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statDb_blks_read
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+</tomanycont>
+</object>
+<object id='PostgreSQL Transactions' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<property type="int" id="height" mode="w" >
+100
+</property>
+<property type="int" id="width" mode="w" >
+500
+</property>
+<property type="string" id="units" mode="w" >
+transactions/sec
+</property>
+<property type="boolean" id="log" mode="w" >
+False
+</property>
+<property type="boolean" id="base" mode="w" >
+False
+</property>
+<property type="int" id="miny" mode="w" >
+0
+</property>
+<property type="int" id="maxy" mode="w" >
+-1
+</property>
+<property type="boolean" id="hasSummary" mode="w" >
+True
+</property>
+<property type="long" id="sequence" mode="w" >
+2
+</property>
+<tomanycont id='graphPoints'>
+<object id='xact_commit' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Commits
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statDb_xact_commit
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+<object id='xact_rollback' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+1
+</property>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Rollbacks
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statDb_xact_rollback
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+</tomanycont>
+</object>
+</tomanycont>
+</object>
+<!-- ('', 'zport', 'dmd', 'Devices', 'Server', 'rrdTemplates', 'PgSqlDatabaseStat') -->
+<object id='/zport/dmd/Devices/Server/rrdTemplates/PgSqlDatabaseStat' module='Products.ZenModel.RRDTemplate' class='RRDTemplate'>
+<property type="text" id="description" mode="w" >
+PostgreSQL Database Statistics Template
+</property>
+<property type="string" id="targetPythonClass" mode="w" >
+ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase
+</property>
+<tomanycont id='datasources'>
 <object id='statUser' module='ZenPacks.community.ZenODBC.datasources.OdbcDataSource' class='OdbcDataSource'>
 <property select_variable="sourcetypes" type="selection" id="sourcetype" mode="w" >
 ODBC
@@ -118,9 +406,89 @@ True
 ${here/zPgSqlConnectionString};Servername=${here/manageIp};Database=${here/dbname};UID=${here/zPgSqlUsername};PWD=${here/zPgSqlPassword}
 </property>
 <property type="string" id="sql" mode="w" >
-SELECT SUM(idx_scan) as idx_scan, SUM(idx_tup_fetch) as idx_tup_fetch, SUM(n_tup_ins) as n_tup_ins, SUM(n_tup_upd) as n_tup_upd, SUM(n_tup_del) as n_tup_del, SUM(seq_scan) as seq_scan, SUM(seq_tup_read) as seq_tup_read FROM pg_stat_user_tables;
+SELECT
+    SUM(heap_blks_hit) as heap_blks_hit,
+    SUM(heap_blks_read) as heap_blks_read,
+    SUM(idx_blks_hit) as idx_blks_hit,
+    SUM(idx_blks_read) as idx_blks_read,
+    SUM(idx_scan) as idx_scan,
+    SUM(idx_tup_fetch) as idx_tup_fetch,
+    SUM(n_tup_ins) as n_tup_ins,
+    SUM(n_tup_upd) as n_tup_upd,
+    SUM(n_tup_del) as n_tup_del,
+    SUM(seq_scan) as seq_scan,
+    SUM(seq_tup_read) as seq_tup_read, 
+    SUM(tidx_blks_hit) as tidx_blks_hit,
+    SUM(tidx_blks_read) as tidx_blks_read,
+    SUM(toast_blks_hit) as toast_blks_hit,
+    SUM(toast_blks_read) as toast_blks_read
+FROM 
+    (SELECT 
+            C.oid AS relid, 
+            N.nspname AS schemaname, 
+            C.relname AS relname, 
+            pg_stat_get_numscans(C.oid) AS seq_scan, 
+            pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, 
+            sum(pg_stat_get_numscans(I.indexrelid))::bigint AS idx_scan, 
+            sum(pg_stat_get_tuples_fetched(I.indexrelid))::bigint +
+                    pg_stat_get_tuples_fetched(C.oid) AS idx_tup_fetch, 
+            pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, 
+            pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, 
+            pg_stat_get_tuples_deleted(C.oid) AS n_tup_del, 
+            pg_stat_get_blocks_fetched(C.oid) - 
+                    pg_stat_get_blocks_hit(C.oid) AS heap_blks_read, 
+            pg_stat_get_blocks_hit(C.oid) AS heap_blks_hit, 
+            sum(pg_stat_get_blocks_fetched(I.indexrelid) - 
+                    pg_stat_get_blocks_hit(I.indexrelid))::bigint AS idx_blks_read, 
+            sum(pg_stat_get_blocks_hit(I.indexrelid))::bigint AS idx_blks_hit, 
+            pg_stat_get_blocks_fetched(T.oid) - 
+                    pg_stat_get_blocks_hit(T.oid) AS toast_blks_read, 
+            pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit, 
+            pg_stat_get_blocks_fetched(X.oid) - 
+                    pg_stat_get_blocks_hit(X.oid) AS tidx_blks_read, 
+            pg_stat_get_blocks_hit(X.oid) AS tidx_blks_hit 
+    FROM pg_class C LEFT JOIN 
+            pg_index I ON C.oid = I.indrelid LEFT JOIN 
+            pg_class T ON C.reltoastrelid = T.oid LEFT JOIN 
+            pg_class X ON T.reltoastidxid = X.oid 
+            LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) 
+    WHERE C.relkind IN ('r', 't')
+    GROUP BY C.oid, N.nspname, C.relname, T.oid, X.oid) AS t
+WHERE schemaname NOT IN ('pg_catalog', 'pg_toast', 'information_schema')
 </property>
 <tomanycont id='datapoints'>
+<object id='heap_blks_hit' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
+<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
+DERIVE
+</property>
+<property type="boolean" id="isrow" mode="w" >
+True
+</property>
+</object>
+<object id='heap_blks_read' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
+<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
+DERIVE
+</property>
+<property type="boolean" id="isrow" mode="w" >
+True
+</property>
+</object>
+<object id='idx_blks_hit' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
+<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
+DERIVE
+</property>
+<property type="boolean" id="isrow" mode="w" >
+True
+</property>
+</object>
+<object id='idx_blks_read' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
+<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
+DERIVE
+</property>
+<property type="boolean" id="isrow" mode="w" >
+True
+</property>
+</object>
 <object id='idx_scan' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
 <property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
 DERIVE
@@ -177,60 +545,6 @@ DERIVE
 True
 </property>
 </object>
-</tomanycont>
-</object>
-<object id='statioUser' module='ZenPacks.community.ZenODBC.datasources.OdbcDataSource' class='OdbcDataSource'>
-<property select_variable="sourcetypes" type="selection" id="sourcetype" mode="w" >
-ODBC
-</property>
-<property type="boolean" id="enabled" mode="w" >
-True
-</property>
-<property type="int" id="severity" mode="w" >
-3
-</property>
-<property type="int" id="cycletime" mode="w" >
-300
-</property>
-<property type="string" id="cs" mode="w" >
-${here/zPgSqlConnectionString};Servername=${here/manageIp};Database=${here/dbname};UID=${here/zPgSqlUsername};PWD=${here/zPgSqlPassword}
-</property>
-<property type="string" id="sql" mode="w" >
-SELECT SUM(heap_blks_hit) as heap_blks_hit, SUM(heap_blks_read) as heap_blks_read, SUM(idx_blks_hit) as idx_blks_hit, SUM(idx_blks_read) as idx_blks_read, SUM(tidx_blks_hit) as tidx_blks_hit, SUM(tidx_blks_read) as tidx_blks_read, SUM(toast_blks_hit) as toast_blks_hit, SUM(toast_blks_read) as toast_blks_read FROM pg_statio_user_tables;
-</property>
-<tomanycont id='datapoints'>
-<object id='heap_blks_hit' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
-<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
-DERIVE
-</property>
-<property type="boolean" id="isrow" mode="w" >
-True
-</property>
-</object>
-<object id='heap_blks_read' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
-<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
-DERIVE
-</property>
-<property type="boolean" id="isrow" mode="w" >
-True
-</property>
-</object>
-<object id='idx_blks_hit' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
-<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
-DERIVE
-</property>
-<property type="boolean" id="isrow" mode="w" >
-True
-</property>
-</object>
-<object id='idx_blks_read' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
-<property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
-DERIVE
-</property>
-<property type="boolean" id="isrow" mode="w" >
-True
-</property>
-</object>
 <object id='tidx_blks_hit' module='Products.ZenModel.RRDDataPoint' class='RRDDataPoint'>
 <property select_variable="rrdtypes" type="selection" id="rrdtype" mode="w" >
 DERIVE
@@ -267,7 +581,7 @@ True
 </object>
 </tomanycont>
 <tomanycont id='graphDefs'>
-<object id='Postgresql Connections' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<object id='PostgreSQL Block Requests' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
 <property type="int" id="height" mode="w" >
 100
 </property>
@@ -275,7 +589,7 @@ True
 500
 </property>
 <property type="string" id="units" mode="w" >
-connections
+requests/sec
 </property>
 <property type="boolean" id="log" mode="w" >
 False
@@ -284,7 +598,7 @@ False
 False
 </property>
 <property type="int" id="miny" mode="w" >
--1
+0
 </property>
 <property type="int" id="maxy" mode="w" >
 -1
@@ -293,10 +607,10 @@ False
 True
 </property>
 <property type="long" id="sequence" mode="w" >
-1
+2
 </property>
 <tomanycont id='graphPoints'>
-<object id='number of connections' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='heap_blks_hit' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
 LINE
 </property>
@@ -310,13 +624,100 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Heap Blocks Hit
 </property>
 <property type="long" id="limit" mode="w" >
 -1
 </property>
 <property type="string" id="dpName" mode="w" >
-statDb_numbackends
+statUser_heap_blks_hit
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+<object id='heap_blks_read' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+1
+</property>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Heap Blocks Read
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statUser_heap_blks_read
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+<object id='idx_blks_hit' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+2
+</property>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Index Blocks Hit
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statUser_idx_blks_hit
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+<object id='idx_blks_read' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+3
+</property>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Index Blocks Read
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statUser_idx_blks_read
 </property>
 <property type="string" id="cFunc" mode="w" >
 AVERAGE
@@ -324,7 +725,7 @@ AVERAGE
 </object>
 </tomanycont>
 </object>
-<object id='Postgresql DB Row' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<object id='PostgreSQL Command Statistics' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
 <property type="int" id="height" mode="w" >
 100
 </property>
@@ -341,7 +742,7 @@ False
 False
 </property>
 <property type="int" id="miny" mode="w" >
--1
+0
 </property>
 <property type="int" id="maxy" mode="w" >
 -1
@@ -349,11 +750,8 @@ False
 <property type="boolean" id="hasSummary" mode="w" >
 True
 </property>
-<property type="long" id="sequence" mode="w" >
-4
-</property>
 <tomanycont id='graphPoints'>
-<object id='deleted' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='n_tup_del' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
 LINE
 </property>
@@ -367,7 +765,7 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Row Deletes
 </property>
 <property type="long" id="limit" mode="w" >
 -1
@@ -379,7 +777,7 @@ statUser_n_tup_del
 AVERAGE
 </property>
 </object>
-<object id='inserted' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='n_tup_ins' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property type="long" id="sequence" mode="w" >
 1
 </property>
@@ -396,7 +794,7 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Row Inserts
 </property>
 <property type="long" id="limit" mode="w" >
 -1
@@ -408,7 +806,7 @@ statUser_n_tup_ins
 AVERAGE
 </property>
 </object>
-<object id='updated' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='n_tup_upd' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property type="long" id="sequence" mode="w" >
 2
 </property>
@@ -425,7 +823,7 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Row Updates
 </property>
 <property type="long" id="limit" mode="w" >
 -1
@@ -439,12 +837,15 @@ AVERAGE
 </object>
 </tomanycont>
 </object>
-<object id='Postgresql DB Row Index' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<object id='PostgreSQL Scans Statistics' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
 <property type="int" id="height" mode="w" >
 100
 </property>
 <property type="int" id="width" mode="w" >
 500
+</property>
+<property type="string" id="units" mode="w" >
+scans/sec
 </property>
 <property type="boolean" id="log" mode="w" >
 False
@@ -453,7 +854,7 @@ False
 False
 </property>
 <property type="int" id="miny" mode="w" >
--1
+0
 </property>
 <property type="int" id="maxy" mode="w" >
 -1
@@ -462,10 +863,10 @@ False
 True
 </property>
 <property type="long" id="sequence" mode="w" >
-5
+1
 </property>
 <tomanycont id='graphPoints'>
-<object id='index scans' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='idx_scan' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
 LINE
 </property>
@@ -479,7 +880,7 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Index Scans
 </property>
 <property type="long" id="limit" mode="w" >
 -1
@@ -491,36 +892,7 @@ statUser_idx_scan
 AVERAGE
 </property>
 </object>
-<object id='rows fetched by sequential index scans' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
-<property type="long" id="sequence" mode="w" >
-3
-</property>
-<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
-LINE
-</property>
-<property type="long" id="lineWidth" mode="w" >
-1
-</property>
-<property type="boolean" id="stacked" mode="w" >
-False
-</property>
-<property type="string" id="format" mode="w" >
-%5.2lf%s
-</property>
-<property type="string" id="legend" mode="w" >
-${graphPoint/id}
-</property>
-<property type="long" id="limit" mode="w" >
--1
-</property>
-<property type="string" id="dpName" mode="w" >
-statUser_seq_tup_read
-</property>
-<property type="string" id="cFunc" mode="w" >
-AVERAGE
-</property>
-</object>
-<object id='rows fetched by sequential scans' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='idx_tup_fetch' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property type="long" id="sequence" mode="w" >
 1
 </property>
@@ -537,7 +909,7 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Index Scan Rows Read
 </property>
 <property type="long" id="limit" mode="w" >
 -1
@@ -549,7 +921,7 @@ statUser_idx_tup_fetch
 AVERAGE
 </property>
 </object>
-<object id='sequential index scans' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='seq_scan' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property type="long" id="sequence" mode="w" >
 2
 </property>
@@ -566,7 +938,7 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Sequential Scans
 </property>
 <property type="long" id="limit" mode="w" >
 -1
@@ -578,35 +950,10 @@ statUser_seq_scan
 AVERAGE
 </property>
 </object>
-</tomanycont>
-</object>
-<object id='Postgresql Database Size' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
-<property type="int" id="height" mode="w" >
-100
+<object id='seq_tup_read' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+3
 </property>
-<property type="int" id="width" mode="w" >
-500
-</property>
-<property type="string" id="units" mode="w" >
-bytes
-</property>
-<property type="boolean" id="log" mode="w" >
-False
-</property>
-<property type="boolean" id="base" mode="w" >
-True
-</property>
-<property type="int" id="miny" mode="w" >
-0
-</property>
-<property type="int" id="maxy" mode="w" >
--1
-</property>
-<property type="boolean" id="hasSummary" mode="w" >
-True
-</property>
-<tomanycont id='graphPoints'>
-<object id='database size' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
 LINE
 </property>
@@ -620,13 +967,13 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Sequential Rows Read
 </property>
 <property type="long" id="limit" mode="w" >
 -1
 </property>
 <property type="string" id="dpName" mode="w" >
-sizeUsed_sizeUsed
+statUser_seq_tup_read
 </property>
 <property type="string" id="cFunc" mode="w" >
 AVERAGE
@@ -634,7 +981,7 @@ AVERAGE
 </object>
 </tomanycont>
 </object>
-<object id='Postgresql Transactions' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
+<object id='PostgreSQL Toast Block Requests' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
 <property type="int" id="height" mode="w" >
 100
 </property>
@@ -642,7 +989,7 @@ AVERAGE
 500
 </property>
 <property type="string" id="units" mode="w" >
-transactions/sec
+requests/sec
 </property>
 <property type="boolean" id="log" mode="w" >
 False
@@ -652,92 +999,6 @@ False
 </property>
 <property type="int" id="miny" mode="w" >
 0
-</property>
-<property type="int" id="maxy" mode="w" >
--1
-</property>
-<property type="boolean" id="hasSummary" mode="w" >
-True
-</property>
-<property type="long" id="sequence" mode="w" >
-2
-</property>
-<tomanycont id='graphPoints'>
-<object id='transactions commited' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
-<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
-LINE
-</property>
-<property type="long" id="lineWidth" mode="w" >
-1
-</property>
-<property type="boolean" id="stacked" mode="w" >
-False
-</property>
-<property type="string" id="format" mode="w" >
-%5.2lf%s
-</property>
-<property type="string" id="legend" mode="w" >
-${graphPoint/id}
-</property>
-<property type="long" id="limit" mode="w" >
--1
-</property>
-<property type="string" id="dpName" mode="w" >
-statDb_xact_commit
-</property>
-<property type="string" id="cFunc" mode="w" >
-AVERAGE
-</property>
-</object>
-<object id='transactions rolledback' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
-<property type="long" id="sequence" mode="w" >
-1
-</property>
-<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
-LINE
-</property>
-<property type="long" id="lineWidth" mode="w" >
-1
-</property>
-<property type="boolean" id="stacked" mode="w" >
-False
-</property>
-<property type="string" id="format" mode="w" >
-%5.2lf%s
-</property>
-<property type="string" id="legend" mode="w" >
-${graphPoint/id}
-</property>
-<property type="long" id="limit" mode="w" >
--1
-</property>
-<property type="string" id="dpName" mode="w" >
-statDb_xact_rollback
-</property>
-<property type="string" id="cFunc" mode="w" >
-AVERAGE
-</property>
-</object>
-</tomanycont>
-</object>
-<object id='Postresql Disk Read' module='Products.ZenModel.GraphDefinition' class='GraphDefinition'>
-<property type="int" id="height" mode="w" >
-100
-</property>
-<property type="int" id="width" mode="w" >
-500
-</property>
-<property type="string" id="units" mode="w" >
-blocks/sec
-</property>
-<property type="boolean" id="log" mode="w" >
-False
-</property>
-<property type="boolean" id="base" mode="w" >
-False
-</property>
-<property type="int" id="miny" mode="w" >
--1
 </property>
 <property type="int" id="maxy" mode="w" >
 -1
@@ -749,7 +1010,10 @@ True
 3
 </property>
 <tomanycont id='graphPoints'>
-<object id='buffer hits' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='tidx_blks_hit' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+2
+</property>
 <property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
 LINE
 </property>
@@ -763,19 +1027,74 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Toast Index Blocks Hit
 </property>
 <property type="long" id="limit" mode="w" >
 -1
 </property>
 <property type="string" id="dpName" mode="w" >
-statDb_blks_hit
+statUser_tidx_blks_hit
 </property>
 <property type="string" id="cFunc" mode="w" >
 AVERAGE
 </property>
 </object>
-<object id='disk blocks read' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<object id='tidx_blks_read' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property type="long" id="sequence" mode="w" >
+3
+</property>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Toast Index Blocks Read
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statUser_tidx_blks_read
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+<object id='toast_blks_hit' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
+<property select_variable="lineTypes" type="selection" id="lineType" mode="w" >
+LINE
+</property>
+<property type="long" id="lineWidth" mode="w" >
+1
+</property>
+<property type="boolean" id="stacked" mode="w" >
+False
+</property>
+<property type="string" id="format" mode="w" >
+%5.2lf%s
+</property>
+<property type="string" id="legend" mode="w" >
+Toast Blocks Hit
+</property>
+<property type="long" id="limit" mode="w" >
+-1
+</property>
+<property type="string" id="dpName" mode="w" >
+statUser_toast_blks_hit
+</property>
+<property type="string" id="cFunc" mode="w" >
+AVERAGE
+</property>
+</object>
+<object id='toast_blks_read' module='Products.ZenModel.DataPointGraphPoint' class='DataPointGraphPoint'>
 <property type="long" id="sequence" mode="w" >
 1
 </property>
@@ -792,13 +1111,13 @@ False
 %5.2lf%s
 </property>
 <property type="string" id="legend" mode="w" >
-${graphPoint/id}
+Toast Blocks Reads
 </property>
 <property type="long" id="limit" mode="w" >
 -1
 </property>
 <property type="string" id="dpName" mode="w" >
-statDb_blks_read
+statUser_toast_blks_read
 </property>
 <property type="string" id="cFunc" mode="w" >
 AVERAGE

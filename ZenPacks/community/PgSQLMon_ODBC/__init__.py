@@ -12,9 +12,11 @@ from Products.ZenModel.ZenPack import ZenPackBase
 class ZenPack(ZenPackBase):
     """ PgSQLMon loader
     """
-
+    
     packZProperties = [
             ('zPgSqlConnectionString', 'DRIVER={PostgreSQL};Port=5432', 'string'),
             ('zPgSqlUsername', 'zenoss', 'string'),
             ('zPgSqlPassword', '', 'password'),
+            ('zPgSqlDatabaseIgnoreNames', '', 'string'),
+            ('zPgSqlDatabaseIgnoreTypes', '', 'string'),
             ]
