@@ -12,41 +12,42 @@ __doc__="""PgSqlDatabaseMap.py
 
 PgSqlDatabaseMap maps the PostgreSQL Databases table to Database objects
 
-$Id: PgSqlDatabaseMap.py,v 1.3 2011/01/02 21:46:18 egor Exp $"""
+$Id: PgSqlDatabaseMap.py,v 1.4 2011/10/26 19:11:03 egor Exp $"""
 
-__version__ = "$Revision: 1.3 $"[11:-2]
+__version__ = "$Revision: 1.4 $"[11:-2]
 
 import re
-from ZenPacks.community.ZenODBC.OdbcPlugin import OdbcPlugin
+from ZenPacks.community.SQLDataSource.SQLPlugin import SQLPlugin
 
-class PgSqlDatabaseMap(OdbcPlugin):
+class PgSqlDatabaseMap(SQLPlugin):
 
 
     ZENPACKID = 'ZenPacks.community.PgSQLMon_ODBC'
 
-    maptype = "PgSqlDatabaseMap"
+    maptype = "DatabaseMap"
     compname = "os"
     relname = "softwaredatabases"
     modname = "ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase"
-    deviceProperties = \
-                OdbcPlugin.deviceProperties + ('zPgSqlUsername',
-                                               'zPgSqlPassword',
-                                               'zPgSqlConnectionString',
-                                               'zPgSqlDatabaseIgnoreNames',
-                                               'zPgSqlDatabaseIgnoreTypes',
-                                               )
+    deviceProperties = SQLPlugin.deviceProperties+('zPgSqlUsername',
+                                                   'zPgSqlPassword',
+                                                   'zPgSqlConnectionString',
+                                                   'zPgSqlDatabaseIgnoreNames',
+                                                   'zPgSqlDatabaseIgnoreTypes',
+                                                   )
 
 
     def queries(self, device):
-        uid = pwd = None
-        cs = [getattr(device, 'zPgSqlConnectionString', 'DRIVER={PostgreSQL}')]
-        options = [opt.split('=')[0].strip().upper() for opt in cs[0].split(';')]
-        if 'SERVERNAME' not in options:cs.append('SERVERNAME=%s'%device.manageIp)
-        cs.append('DATABASE=template1')
-        if 'UID' not in options: uid = getattr(device, 'zPgSqlUsername', None)
-        if uid: cs.append('UID=%s'%uid)
-        if 'PWD' not in options: pwd = getattr(device, 'zPgSqlPassword', None)
-        if pwd: cs.append('PWD=%s'%pwd)
+        args = [getattr(device, 'zPgSqlConnectionString',
+                        "'pyodbc',DRIVER='{PostgreSQL}',port='5432',ansi='True'")]
+        kwargs = eval('(lambda *argsl,**kwargs:kwargs)(%s)'%args[0].lower())
+        if 'user' not in kwargs:
+            args.append("user='%s'"%getattr(device, 'zPgSqlUsername', ''))
+        if 'host' not in kwargs:
+            args.append("host='%s'" % device.manageIp)
+        if 'database' not in kwargs:
+            args.append("database='template1'")
+        if 'password' not in kwargs:
+            args.append("password='%s'"%getattr(device, 'zPgSqlPassword', ''))
         return {
             "databases": (
                 """SELECT d.datname as dbname,
@@ -61,11 +62,11 @@ class PgSqlDatabaseMap(OdbcPlugin):
                           END as type,
                           pg_database_size(d.datname)::float as totalblocks
                    FROM pg_database d,
-                        pg_authid u,
+                        pg_roles u,
                         pg_tablespace t
                    WHERE d.datdba=u.oid AND d.dattablespace=t.oid""",
                 None,
-                ';'.join(cs),
+                ','.join(args),
                 {
                     'dbname': 'dbname',
                     'contact':'contact',
@@ -92,7 +93,6 @@ class PgSqlDatabaseMap(OdbcPlugin):
                 om = self.objectMap(db)
                 om.id = self.prepId(om.dbname)
                 om.version = str(om.version[4:])
-                om.status = 2
             except AttributeError:
                 continue
             rm.append(om)

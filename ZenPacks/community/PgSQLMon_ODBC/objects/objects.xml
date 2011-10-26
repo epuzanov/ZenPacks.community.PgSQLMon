@@ -9,9 +9,9 @@ PostgreSQL Database Template
 ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase
 </property>
 <tomanycont id='datasources'>
-<object id='statDb' module='ZenPacks.community.ZenODBC.datasources.OdbcDataSource' class='OdbcDataSource'>
+<object id='statDb' module='ZenPacks.community.SQLDataSource.datasources.SQLDataSource' class='SQLDataSource'>
 <property select_variable="sourcetypes" type="selection" id="sourcetype" mode="w" >
-ODBC
+SQL
 </property>
 <property type="boolean" id="enabled" mode="w" >
 True
@@ -23,7 +23,7 @@ True
 300
 </property>
 <property type="string" id="cs" mode="w" >
-${here/zPgSqlConnectionString};Servername=${here/manageIp};Database=template1;UID=${here/zPgSqlUsername};PWD=${here/zPgSqlPassword}
+${here/zPgSqlConnectionString},user='${here/zPgSqlUsername}',host='${here/manageIp}',database='template1',password='${here/zPgSqlPassword}'
 </property>
 <property type="string" id="sql" mode="w" >
 SELECT
@@ -389,9 +389,9 @@ PostgreSQL Database Statistics Template
 ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase
 </property>
 <tomanycont id='datasources'>
-<object id='statUser' module='ZenPacks.community.ZenODBC.datasources.OdbcDataSource' class='OdbcDataSource'>
+<object id='statUser' module='ZenPacks.community.SQLDataSource.datasources.SQLDataSource' class='SQLDataSource'>
 <property select_variable="sourcetypes" type="selection" id="sourcetype" mode="w" >
-ODBC
+SQL
 </property>
 <property type="boolean" id="enabled" mode="w" >
 True
@@ -403,7 +403,7 @@ True
 300
 </property>
 <property type="string" id="cs" mode="w" >
-${here/zPgSqlConnectionString};Servername=${here/manageIp};Database=${here/dbname};UID=${here/zPgSqlUsername};PWD=${here/zPgSqlPassword}
+${here/zPgSqlConnectionString},user='${here/zPgSqlUsername}',host='${here/manageIp}',database='${here/dbname}',password='${here/zPgSqlPassword}'
 </property>
 <property type="string" id="sql" mode="w" >
 SELECT
