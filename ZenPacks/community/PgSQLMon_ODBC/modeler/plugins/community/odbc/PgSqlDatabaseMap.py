@@ -12,11 +12,12 @@ __doc__="""PgSqlDatabaseMap.py
 
 PgSqlDatabaseMap maps the PostgreSQL Databases table to Database objects
 
-$Id: PgSqlDatabaseMap.py,v 1.4 2011/10/26 19:11:03 egor Exp $"""
+$Id: PgSqlDatabaseMap.py,v 1.5 2011/10/27 17:39:37 egor Exp $"""
 
-__version__ = "$Revision: 1.4 $"[11:-2]
+__version__ = "$Revision: 1.5 $"[11:-2]
 
 import re
+from string import lower
 from ZenPacks.community.SQLDataSource.SQLPlugin import SQLPlugin
 
 class PgSqlDatabaseMap(SQLPlugin):
@@ -38,15 +39,15 @@ class PgSqlDatabaseMap(SQLPlugin):
 
     def queries(self, device):
         args = [getattr(device, 'zPgSqlConnectionString',
-                        "'pyodbc',DRIVER='{PostgreSQL}',port='5432',ansi='True'")]
-        kwargs = eval('(lambda *argsl,**kwargs:kwargs)(%s)'%args[0].lower())
-        if 'user' not in kwargs:
+                    "'pyisqldb',DRIVER='{PostgreSQL}',port='5432',ansi=True")]
+        kwkeys = map(lower, eval('(lambda *arg,**kws:kws)(%s)'%args[0]).keys())
+        if 'user' not in kwkeys:
             args.append("user='%s'"%getattr(device, 'zPgSqlUsername', ''))
-        if 'host' not in kwargs:
+        if 'host' not in kwkeys:
             args.append("host='%s'" % device.manageIp)
-        if 'database' not in kwargs:
+        if 'database' not in kwkeys:
             args.append("database='template1'")
-        if 'password' not in kwargs:
+        if 'password' not in kwkeys:
             args.append("password='%s'"%getattr(device, 'zPgSqlPassword', ''))
         return {
             "databases": (

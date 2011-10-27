@@ -30,18 +30,30 @@ You must first install
 External dependencies
 ---------------------
 
-You must install ONE of DB-API 2.0 compatible modules for PostgrSQL database.
+You can use **pyisqldb** module provided by SQLDataSource ZenPack (**pyisqldb**
+is a wrapper for **isql** command from `unixODBC <http://www.unixodbc.org/>`_
+package), or install ONE of DB-API 2.0 compatible modules for PostgrSQL database.
 Module must be installed with **easy_install-2.6** command as **zenoss** user.
 
+- **pyisqldb** - DB-API 2.0 compatible wrapper for **isql** command from
+  `unixODBC <http://www.unixodbc.org/>`_. PostgreSQL ODBC driver must be
+  installed and registered with name "PostgreSQL".
+
+  zPgSqlConnectionString example:
+
+      ::
+
+          'pyisqldb',DRIVER='{PostgreSQL}',port='5432',ansi=True
+
 - `pyodbc <http://code.google.com/p/pyodbc/>`_ - DB-API 2.0 compatible interface
-  to UnixODBC. PostgreSQL ODBC driver must be installed and registered with name
+  to unixODBC. PostgreSQL ODBC driver must be installed and registered with name
   "PostgreSQL".
 
   zPgSqlConnectionString example:
 
       ::
 
-          'pyodbc',DRIVER='{PostgreSQL}',port='5432',ansi='True'
+          'pyodbc',DRIVER='{PostgreSQL}',port='5432',ansi=True
 
 - `pg8000 <http://pybrary.net/pg8000/>`_ - DB-API 2.0 compatible Pure-Python
   interface to the PostgreSQL database engine.
@@ -50,7 +62,7 @@ Module must be installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'pyodbc',DRIVER='{PostgreSQL}',port='5432',ansi='True'
+          'pg8000.dbapi',port=5432
 
 Installation
 ============

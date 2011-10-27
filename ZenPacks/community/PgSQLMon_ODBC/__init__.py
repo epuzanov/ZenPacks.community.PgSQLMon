@@ -14,7 +14,7 @@ class ZenPack(ZenPackBase):
     """
 
     packZProperties = [
-            ('zPgSqlConnectionString', "'pyodbc',DRIVER='{PostgreSQL}',port='5432',ansi='True'", 'string'),
+            ('zPgSqlConnectionString', "'pyisqldb',DRIVER='{PostgreSQL}',port='5432',ansi=True", 'string'),
             ('zPgSqlUsername', 'zenoss', 'string'),
             ('zPgSqlPassword', '', 'password'),
             ('zPgSqlDatabaseIgnoreNames', '', 'string'),
