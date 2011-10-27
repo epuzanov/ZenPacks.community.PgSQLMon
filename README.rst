@@ -30,10 +30,9 @@ You must first install
 External dependencies
 ---------------------
 
-You can use **pyisqldb** module provided by SQLDataSource ZenPack (**pyisqldb**
-is a wrapper for **isql** command from `unixODBC <http://www.unixodbc.org/>`_
-package), or install ONE of DB-API 2.0 compatible modules for PostgrSQL database.
-Module must be installed with **easy_install-2.6** command as **zenoss** user.
+You can use **pyisqldb** module provided by SQLDataSource ZenPack, or install
+ONE of the DB-API 2.0 compatible modules for PostgrSQL database. Module can be
+installed with **easy_install-2.6** command as **zenoss** user.
 
 - **pyisqldb** - DB-API 2.0 compatible wrapper for **isql** command from
   `unixODBC <http://www.unixodbc.org/>`_. PostgreSQL ODBC driver must be
