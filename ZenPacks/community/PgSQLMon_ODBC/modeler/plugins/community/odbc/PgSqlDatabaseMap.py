@@ -12,9 +12,9 @@ __doc__="""PgSqlDatabaseMap.py
 
 PgSqlDatabaseMap maps the PostgreSQL Databases table to Database objects
 
-$Id: PgSqlDatabaseMap.py,v 1.5 2011/10/27 17:39:37 egor Exp $"""
+$Id: PgSqlDatabaseMap.py,v 1.6 2011/12/18 20:36:17 egor Exp $"""
 
-__version__ = "$Revision: 1.5 $"[11:-2]
+__version__ = "$Revision: 1.6 $"[11:-2]
 
 import re
 from string import lower
@@ -29,6 +29,7 @@ class PgSqlDatabaseMap(SQLPlugin):
     compname = "os"
     relname = "softwaredatabases"
     modname = "ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase"
+    cspropname = "zPgSqlConnectionString"
     deviceProperties = SQLPlugin.deviceProperties+('zPgSqlUsername',
                                                    'zPgSqlPassword',
                                                    'zPgSqlConnectionString',
@@ -37,18 +38,22 @@ class PgSqlDatabaseMap(SQLPlugin):
                                                    )
 
 
-    def queries(self, device):
-        args = [getattr(device, 'zPgSqlConnectionString',
-                    "'pyisqldb',DRIVER='{PostgreSQL}',port='5432',ansi=True")]
+    def prepareCS(self, device):
+        args = [getattr(device, self.cspropname, '') or \
+                    "'pyisqldb',DRIVER='{PostgreSQL}',port='5432',ansi=True"]
         kwkeys = map(lower, eval('(lambda *arg,**kws:kws)(%s)'%args[0]).keys())
         if 'user' not in kwkeys:
             args.append("user='%s'"%getattr(device, 'zPgSqlUsername', ''))
         if 'host' not in kwkeys:
-            args.append("host='%s'" % device.manageIp)
+            args.append("host='%s'"%getattr(device, 'manageIp', 'localhost'))
         if 'database' not in kwkeys:
             args.append("database='template1'")
         if 'password' not in kwkeys:
             args.append("password='%s'"%getattr(device, 'zPgSqlPassword', ''))
+        return ','.join(args)
+
+
+    def queries(self, device):
         return {
             "databases": (
                 """SELECT d.datname as dbname,
@@ -67,7 +72,7 @@ class PgSqlDatabaseMap(SQLPlugin):
                         pg_tablespace t
                    WHERE d.datdba=u.oid AND d.dattablespace=t.oid""",
                 None,
-                ','.join(args),
+                self.prepareCS(device),
                 {
                     'dbname': 'dbname',
                     'contact':'contact',
