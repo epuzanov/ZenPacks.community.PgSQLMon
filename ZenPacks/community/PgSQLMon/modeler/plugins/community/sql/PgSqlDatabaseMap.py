@@ -1,7 +1,7 @@
 ################################################################################
 #
-# This program is part of the PgSQLMon_ODBC Zenpack for Zenoss.
-# Copyright (C) 2009, 2010. 2011 Egor Puzanov.
+# This program is part of the PgSQLMon Zenpack for Zenoss.
+# Copyright (C) 2009-2012 Egor Puzanov.
 #
 # This program can be used under the GNU General Public License version 2
 # You can find full information here: http://www.zenoss.com/oss
@@ -12,24 +12,23 @@ __doc__="""PgSqlDatabaseMap.py
 
 PgSqlDatabaseMap maps the PostgreSQL Databases table to Database objects
 
-$Id: PgSqlDatabaseMap.py,v 1.6 2011/12/18 20:36:17 egor Exp $"""
+$Id: PgSqlDatabaseMap.py,v 1.7 2012/04/18 20:57:30 egor Exp $"""
 
-__version__ = "$Revision: 1.6 $"[11:-2]
+__version__ = "$Revision: 1.7 $"[11:-2]
 
-import re
-from string import lower
+from Products.ZenModel.ZenPackPersistence import ZenPackPersistence
 from ZenPacks.community.SQLDataSource.SQLPlugin import SQLPlugin
+import re
 
-class PgSqlDatabaseMap(SQLPlugin):
+class PgSqlDatabaseMap(ZenPackPersistence, SQLPlugin):
 
 
-    ZENPACKID = 'ZenPacks.community.PgSQLMon_ODBC'
+    ZENPACKID = 'ZenPacks.community.PgSQLMon'
 
     maptype = "DatabaseMap"
     compname = "os"
     relname = "softwaredatabases"
-    modname = "ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase"
-    cspropname = "zPgSqlConnectionString"
+    modname = "ZenPacks.community.PgSQLMon.PgSqlDatabase"
     deviceProperties = SQLPlugin.deviceProperties+('zPgSqlUsername',
                                                    'zPgSqlPassword',
                                                    'zPgSqlConnectionString',
@@ -38,27 +37,16 @@ class PgSqlDatabaseMap(SQLPlugin):
                                                    )
 
 
-    def prepareCS(self, device):
-        args = [getattr(device, self.cspropname, '') or \
-                    "'pyisqldb',DRIVER='{PostgreSQL}',port='5432',ansi=True"]
-        kwkeys = map(lower, eval('(lambda *arg,**kws:kws)(%s)'%args[0]).keys())
-        if 'user' not in kwkeys:
-            args.append("user='%s'"%getattr(device, 'zPgSqlUsername', ''))
-        if 'host' not in kwkeys:
-            args.append("host='%s'"%getattr(device, 'manageIp', 'localhost'))
-        if 'database' not in kwkeys:
-            args.append("database='template1'")
-        if 'password' not in kwkeys:
-            args.append("password='%s'"%getattr(device, 'zPgSqlPassword', ''))
-        return ','.join(args)
-
-
     def queries(self, device):
-        return {
-            "databases": (
+        queries = {}
+        connectionString = getattr(device, 'zPgSqlConnectionString', '') or \
+            "'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='5432',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True"
+        setattr(device, 'dbname', 'template1')
+        cs = self.prepareCS(device, connectionString)
+        queries["databases"] = (
                 """SELECT d.datname as dbname,
                           u.rolname as contact,
-                          'Ver.'||current_setting('server_version') as version,
+                          current_setting('server_version') as version,
                           current_setting('block_size')::float as blocksize,
                           t.spcname as setdbsrvinst,
                           d.datallowconn::int as allowconn,
@@ -66,25 +54,24 @@ class PgSqlDatabaseMap(SQLPlugin):
                               WHEN True THEN 'PgSqlTemplate'
                               ELSE 'PgSqlDatabase'
                           END as type,
-                          pg_database_size(d.datname)::float as totalblocks
+                          ceil(pg_database_size(d.datname)::float/current_setting('block_size')::float) as totalblocks
                    FROM pg_database d,
                         pg_roles u,
                         pg_tablespace t
                    WHERE d.datdba=u.oid AND d.dattablespace=t.oid""",
                 None,
-                self.prepareCS(device),
+                cs,
                 {
                     'dbname': 'dbname',
                     'contact':'contact',
                     'version':'version',
-                    'blocksize':'_blockSize',
+                    'blocksize':'blockSize',
                     'setdbsrvinst':'_setDBSrvInst',
                     'allowconn':'allowConn',
                     'type':'type',
                     'totalblocks': 'totalBlocks',
-                }
-            ),
-        }
+                })
+        return queries
 
 
     def process(self, device, results, log):
@@ -92,13 +79,14 @@ class PgSqlDatabaseMap(SQLPlugin):
         skiptsnames = getattr(device, 'zPgSqlDatabaseIgnoreNames', None)
         skiptstypes = getattr(device, 'zPgSqlDatabaseIgnoreTypes', None)
         rm = self.relMap()
-        for db in results.get('databases', []):
-            if (skiptsnames and re.search(skiptsnames,db['dbname'])):continue
-            if (skiptstypes and re.search(skiptstypes,db['type'])):continue
+        for db in results.get('databases', ()):
+            if skiptsnames and re.search(skiptsnames, db.get('dbname','')):
+                continue
+            if skiptstypes and re.search(skiptstypes, db.get('type','')):
+                continue
             try:
                 om = self.objectMap(db)
                 om.id = self.prepId(om.dbname)
-                om.version = str(om.version[4:])
             except AttributeError:
                 continue
             rm.append(om)

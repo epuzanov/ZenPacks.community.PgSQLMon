@@ -6,7 +6,7 @@
 PostgreSQL Database Template
 </property>
 <property type="string" id="targetPythonClass" mode="w" >
-ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase
+ZenPacks.community.PgSQLMon.PgSqlDatabase
 </property>
 <tomanycont id='datasources'>
 <object id='statDb' module='ZenPacks.community.SQLDataSource.datasources.SQLDataSource' class='SQLDataSource'>
@@ -16,14 +16,17 @@ SQL
 <property type="boolean" id="enabled" mode="w" >
 True
 </property>
+<property type="string" id="eventClass" mode="w" >
+/Status/PgSqlDatabase
+</property>
 <property type="int" id="severity" mode="w" >
-3
+4
 </property>
 <property type="int" id="cycletime" mode="w" >
 300
 </property>
 <property type="string" id="cs" mode="w" >
-${here/zPgSqlConnectionString},user='${here/zPgSqlUsername}',host='${here/manageIp}',database='template1',password='${here/zPgSqlPassword}'
+python:getattr(here, 'zPgSqlConnectionString', '').replace('${here/dbname}', 'template1')
 </property>
 <property type="string" id="sql" mode="w" >
 SELECT
@@ -386,7 +389,7 @@ AVERAGE
 PostgreSQL Database Statistics Template
 </property>
 <property type="string" id="targetPythonClass" mode="w" >
-ZenPacks.community.PgSQLMon_ODBC.PgSqlDatabase
+ZenPacks.community.PgSQLMon.PgSqlDatabase
 </property>
 <tomanycont id='datasources'>
 <object id='statUser' module='ZenPacks.community.SQLDataSource.datasources.SQLDataSource' class='SQLDataSource'>
@@ -396,14 +399,17 @@ SQL
 <property type="boolean" id="enabled" mode="w" >
 True
 </property>
+<property type="string" id="eventClass" mode="w" >
+/Status/PgSqlDatabase
+</property>
 <property type="int" id="severity" mode="w" >
-3
+4
 </property>
 <property type="int" id="cycletime" mode="w" >
 300
 </property>
 <property type="string" id="cs" mode="w" >
-${here/zPgSqlConnectionString},user='${here/zPgSqlUsername}',host='${here/manageIp}',database='${here/dbname}',password='${here/zPgSqlPassword}'
+${here/zPgSqlConnectionString}
 </property>
 <property type="string" id="sql" mode="w" >
 SELECT
@@ -1126,5 +1132,26 @@ AVERAGE
 </tomanycont>
 </object>
 </tomanycont>
+</object>
+<!-- ('', 'zport', 'dmd', 'Events', 'Status', 'PgSqlDatabase') -->
+<object id='/zport/dmd/Events/Status/PgSqlDatabase' module='Products.ZenEvents.EventClass' class='EventClass'>
+<property type="text" id="transform" mode="w" >
+status = evt.severity and 5 or 2
+for comp in device.os.softwaredatabases():
+    if comp.id != evt.component: continue
+    if comp.status != status:
+        comp.status = status
+        txnCommit()
+    break
+</property>
+<property type="text" id="transform" mode="w" >
+status = evt.severity and 5 or 2
+for comp in device.os.softwaredatabases():
+    if comp.id != evt.component: continue
+    if comp.status != status:
+        comp.status = status
+        txnCommit()
+    break
+</property>
 </object>
 </objects>

@@ -2,13 +2,13 @@
 # These variables are overwritten by Zenoss when the ZenPack is exported
 # or saved.  Do not modify them directly here.
 # NB: PACKAGES is deprecated
-NAME = "ZenPacks.community.PgSQLMon_ODBC"
-VERSION = "2.4"
+NAME = "ZenPacks.community.PgSQLMon"
+VERSION = "2.5"
 AUTHOR = "Egor Puzanov"
 LICENSE = ""
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.community']
-PACKAGES = ['ZenPacks', 'ZenPacks.community', 'ZenPacks.community.PgSQLMon_ODBC']
-INSTALL_REQUIRES = ['ZenPacks.community.RDBMS>=2.1', 'ZenPacks.community.SQLDataSource>=1.90']
+PACKAGES = ['ZenPacks', 'ZenPacks.community', 'ZenPacks.community.PgSQLMon']
+INSTALL_REQUIRES = ['ZenPacks.community.RDBMS>=2.1', 'ZenPacks.community.SQLDataSource>=1.99']
 COMPAT_ZENOSS_VERS = ">=2.5"
 PREV_ZENPACK_NAME = ""
 # STOP_REPLACEMENTS

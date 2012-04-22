@@ -1,5 +1,5 @@
 ================================
-ZenPacks.community.PgSQLMon_ODBC
+ZenPacks.community.PgSQLMon
 ================================
 
 About
@@ -17,7 +17,7 @@ Zenoss
 
 You must first have, or install, Zenoss 2.5.2 or later. This ZenPack was tested
 against Zenoss 2.5.2 and Zenoss 3.2. You can download the free Core version of
-Zenoss from http://community.zenoss.org/community/download
+Zenoss from http://community.zenoss.org/community/download.
 
 ZenPacks
 --------
@@ -26,6 +26,9 @@ You must first install
 
 - `SQLDataSource ZenPack <http://community.zenoss.org/docs/DOC-5913>`_
 - `RDBMS Monitoring ZenPack <http://community.zenoss.org/docs/DOC-3447>`_
+
+If you have an old version (ZenPacks.community.PgSQLMon_ODBC) of this ZenPack
+installed, please uninstall it.
 
 External dependencies
 ---------------------
@@ -42,7 +45,7 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'pyisqldb',DRIVER='{PostgreSQL}',port='5432',ansi=True
+          'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='5432',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True
 
 - `pyodbc <http://code.google.com/p/pyodbc/>`_ - DB-API 2.0 compatible interface
   to unixODBC. PostgreSQL ODBC driver must be installed and registered with name
@@ -52,7 +55,7 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'pyodbc',DRIVER='{PostgreSQL}',port='5432',ansi=True
+          'pyodbc',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='5432',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True
 
 - `pg8000 <http://pybrary.net/pg8000/>`_ - DB-API 2.0 compatible Pure-Python
   interface to the PostgreSQL database engine.
@@ -61,7 +64,16 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'pg8000.dbapi',port=5432
+          'pg8000.dbapi',host='${here/manageIp}',port=5432,database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',socket_timeout=10,ssl=False
+
+- `psycopg <http://initd.org/psycopg/>`_ - DB-API 2.0 compatible
+  interface to the PostgreSQL database engine.
+
+  zPgSqlConnectionString example:
+
+      ::
+
+          'psycopg2',host='${here/manageIp}',port=5432,database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}'
 
 Installation
 ============
@@ -69,26 +81,26 @@ Installation
 Normal Installation (packaged egg)
 ----------------------------------
 
-Download the `PgSQLMon_ODBC ZenPack <http://community.zenoss.org/docs/DOC-3497>`_.
+Download the `PgSQLMon ZenPack <http://community.zenoss.org/docs/DOC-3497>`_.
 Copy this file to your Zenoss server and run the following commands as the zenoss
 user.
 
     ::
 
-        zenpack --install ZenPacks.community.PgSQLMon_ODBC-2.3.egg
+        zenpack --install ZenPacks.community.PgSQLMon-2.5.egg
         zenoss restart
 
 Developer Installation (link mode)
 ----------------------------------
 
-If you wish to further develop and possibly contribute back to the PgSQLMon_ODBC
-ZenPack you should clone the git `repository <https://github.com/epuzanov/ZenPacks.community.PgSQLMon_ODBC>`_,
+If you wish to further develop and possibly contribute back to the PgSQLMon
+ZenPack you should clone the git `repository <https://github.com/epuzanov/ZenPacks.community.PgSQLMon>`_,
 then install the ZenPack in developer mode using the following commands.
 
     ::
 
-        git clone git://github.com/epuzanov/ZenPacks.community.PgSQLMon_ODBC.git
-        zenpack --link --install ZenPacks.community.PgSQLMon_ODBC
+        git clone git://github.com/epuzanov/ZenPacks.community.PgSQLMon.git
+        zenpack --link --install ZenPacks.community.PgSQLMon
         zenoss restart
 
 
@@ -109,7 +121,7 @@ Configuration Properties
 Modeler Plugins
 ---------------
 
-- community.odbc.PgSqlDatabaseMap
+- community.sql.PgSqlDatabaseMap
 
 Monitoring Templates
 --------------------
