@@ -12,13 +12,31 @@ __doc__="""PgSqlDatabaseMap.py
 
 PgSqlDatabaseMap maps the PostgreSQL Databases table to Database objects
 
-$Id: PgSqlDatabaseMap.py,v 1.7 2012/04/18 20:57:30 egor Exp $"""
+$Id: PgSqlDatabaseMap.py,v 1.8 2012/04/25 01:08:18 egor Exp $"""
 
-__version__ = "$Revision: 1.7 $"[11:-2]
+__version__ = "$Revision: 1.8 $"[11:-2]
 
 from Products.ZenModel.ZenPackPersistence import ZenPackPersistence
+from Products.DataCollector.plugins.DataMaps import MultiArgs
 from ZenPacks.community.SQLDataSource.SQLPlugin import SQLPlugin
 import re
+
+DBQUERY = """SELECT
+    d.datname as dbname,
+    u.rolname as contact,
+    current_setting('server_version') as version,
+    current_setting('block_size')::float as blocksize,
+    current_setting('port') as setdbsrvinst,
+    d.datallowconn::int as allowconn,
+    CASE d.datistemplate
+        WHEN True THEN 'PgSqlTemplate'
+        ELSE 'PgSqlDatabase'
+    END as type,
+    ceil(pg_database_size(d.datname)::float/current_setting('block_size')::float) as totalblocks
+FROM pg_database d,
+    pg_roles u,
+    pg_tablespace t
+WHERE d.datdba=u.oid AND d.dattablespace=t.oid"""
 
 class PgSqlDatabaseMap(ZenPackPersistence, SQLPlugin):
 
@@ -32,33 +50,33 @@ class PgSqlDatabaseMap(ZenPackPersistence, SQLPlugin):
     deviceProperties = SQLPlugin.deviceProperties+('zPgSqlUsername',
                                                    'zPgSqlPassword',
                                                    'zPgSqlConnectionString',
+                                                   'zPgSqlPorts',
                                                    'zPgSqlDatabaseIgnoreNames',
                                                    'zPgSqlDatabaseIgnoreTypes',
                                                    )
 
 
     def queries(self, device):
-        queries = {}
+        tasks = {}
         connectionString = getattr(device, 'zPgSqlConnectionString', '') or \
-            "'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='5432',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True"
+            "'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='${here/port}',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True"
         setattr(device, 'dbname', 'template1')
-        cs = self.prepareCS(device, connectionString)
-        queries["databases"] = (
-                """SELECT d.datname as dbname,
-                          u.rolname as contact,
-                          current_setting('server_version') as version,
-                          current_setting('block_size')::float as blocksize,
-                          t.spcname as setdbsrvinst,
-                          d.datallowconn::int as allowconn,
-                          CASE d.datistemplate
-                              WHEN True THEN 'PgSqlTemplate'
-                              ELSE 'PgSqlDatabase'
-                          END as type,
-                          ceil(pg_database_size(d.datname)::float/current_setting('block_size')::float) as totalblocks
-                   FROM pg_database d,
-                        pg_roles u,
-                        pg_tablespace t
-                   WHERE d.datdba=u.oid AND d.dattablespace=t.oid""",
+        ports = getattr(device,'zPgSqlPorts', '') or '5432'
+        if type(ports) is str:
+            ports = [ports]
+        for inst in ports:
+            setattr(device, 'port', inst or '5432')
+            cs = self.prepareCS(device, connectionString)
+            tasks["si_%s"%inst] = (
+                "SELECT 'PostgreSQL '||current_setting('server_version') as product, current_setting('port') as port",
+                None,
+                cs,
+                {
+                    'product':'setProductKey',
+                    'port':'port',
+                })
+            tasks["db_%s"%inst] = (
+                DBQUERY,
                 None,
                 cs,
                 {
@@ -66,28 +84,45 @@ class PgSqlDatabaseMap(ZenPackPersistence, SQLPlugin):
                     'contact':'contact',
                     'version':'version',
                     'blocksize':'blockSize',
-                    'setdbsrvinst':'_setDBSrvInst',
+                    'setdbsrvinst':'setDBSrvInst',
                     'allowconn':'allowConn',
                     'type':'type',
                     'totalblocks': 'totalBlocks',
                 })
-        return queries
+        return tasks
 
 
     def process(self, device, results, log):
         log.info('processing %s for device %s', self.name(), device.id)
         skiptsnames = getattr(device, 'zPgSqlDatabaseIgnoreNames', None)
         skiptstypes = getattr(device, 'zPgSqlDatabaseIgnoreTypes', None)
-        rm = self.relMap()
-        for db in results.get('databases', ()):
-            if skiptsnames and re.search(skiptsnames, db.get('dbname','')):
+        dbrm = self.relMap()
+        irm = self.relMap()
+        irm.relname = "softwaredbsrvinstances"
+        for tname, result in results.iteritems():
+            if tname.startswith('si_'):
+                try:
+                    inst = result[0]
+                    om = self.objectMap(inst)
+                except:
+                    continue
+                om.modname = "ZenPacks.community.PgSQLMon.PgSqlSrvInst"
+                om.dbsiname = str(om.port).strip()
+                om.id = self.prepId(om.dbsiname)
+                om.setProductKey = MultiArgs(om.setProductKey, 'PostgreSQL')
+                irm.append(om)
                 continue
-            if skiptstypes and re.search(skiptstypes, db.get('type','')):
-                continue
-            try:
-                om = self.objectMap(db)
-                om.id = self.prepId(om.dbname)
-            except AttributeError:
-                continue
-            rm.append(om)
-        return rm
+            elif tname.startswith('db_'):
+                for db in result or ():
+                    if skiptsnames and re.search(skiptsnames,
+                                                db.get('dbname','')): continue
+                    if skiptstypes and re.search(skiptstypes,
+                                                db.get('type','')): continue
+                    try:
+                        om = self.objectMap(db)
+                        om.id = self.prepId(om.dbname)
+                    except AttributeError:
+                        continue
+                    dbrm.append(om)
+            else: continue
+        return [irm, dbrm]

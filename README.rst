@@ -28,7 +28,7 @@ You must first install
 - `RDBMS Monitoring ZenPack <http://community.zenoss.org/docs/DOC-3447>`_
 
 If you have an old version (ZenPacks.community.PgSQLMon_ODBC) of this ZenPack
-installed, please uninstall it.
+installed, please uninstall it first.
 
 External dependencies
 ---------------------
@@ -45,7 +45,7 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='5432',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True
+          'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='${here/port}',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True
 
 - `pyodbc <http://code.google.com/p/pyodbc/>`_ - DB-API 2.0 compatible interface
   to unixODBC. PostgreSQL ODBC driver must be installed and registered with name
@@ -55,7 +55,7 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'pyodbc',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='5432',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True
+          'pyodbc',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='${here/port}',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True
 
 - `pg8000 <http://pybrary.net/pg8000/>`_ - DB-API 2.0 compatible Pure-Python
   interface to the PostgreSQL database engine.
@@ -64,7 +64,7 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'pg8000.dbapi',host='${here/manageIp}',port=5432,database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',socket_timeout=10,ssl=False
+          'pg8000.dbapi',host='${here/manageIp}',port=${here/port},database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',socket_timeout=10,ssl=False
 
 - `psycopg <http://initd.org/psycopg/>`_ - DB-API 2.0 compatible
   interface to the PostgreSQL database engine.
@@ -73,7 +73,7 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
       ::
 
-          'psycopg2',host='${here/manageIp}',port=5432,database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}'
+          'psycopg2',host='${here/manageIp}',port=${here/port},database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}'
 
 Installation
 ============

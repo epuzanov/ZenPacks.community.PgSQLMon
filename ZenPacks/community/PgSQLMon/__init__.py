@@ -14,7 +14,8 @@ class ZenPack(ZenPackBase):
     """
 
     packZProperties = [
-            ('zPgSqlConnectionString', "'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='5432',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True", 'string'),
+            ('zPgSqlConnectionString', "'pyisqldb',DRIVER='{PostgreSQL}',host='${here/manageIp}',port='${here/port}',database='${here/dbname}',user='${here/zPgSqlUsername}',password='${here/zPgSqlPassword}',ansi=True", 'string'),
+            ('zPgSqlPorts', ['5432'], 'lines'),
             ('zPgSqlUsername', 'zenoss', 'string'),
             ('zPgSqlPassword', '', 'password'),
             ('zPgSqlDatabaseIgnoreNames', '', 'string'),

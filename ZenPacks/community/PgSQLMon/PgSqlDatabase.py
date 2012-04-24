@@ -12,9 +12,9 @@ __doc__="""PgSqlDatabase
 
 PgSqlDatabase is a Database
 
-$Id: PgSqlDatabase.py,v 1.3 2012/04/18 21:38:03 egor Exp $"""
+$Id: PgSqlDatabase.py,v 1.4 2012/04/25 01:10:16 egor Exp $"""
 
-__version__ = "$Revision: 1.3 $"[11:-2]
+__version__ = "$Revision: 1.4 $"[11:-2]
 
 from Globals import InitializeClass
 from ZenPacks.community.RDBMS.Database import Database
@@ -52,5 +52,12 @@ class PgSqlDatabase(Database):
         Return the number of used bytes
         """
         return self.cacheRRDValue('statDb_sizeUsed', 0)
+
+    def port(self):
+        """
+        Return the port attribute of DBSrvInst
+        """
+        inst = self.getDBSrvInst()
+        return inst and inst.port or 5432
 
 InitializeClass(PgSqlDatabase)
