@@ -27,9 +27,6 @@ You must first install
 - `SQLDataSource ZenPack <http://community.zenoss.org/docs/DOC-5913>`_
 - `RDBMS Monitoring ZenPack <http://community.zenoss.org/docs/DOC-3447>`_
 
-If you have an old version (ZenPacks.community.PgSQLMon_ODBC) of this ZenPack
-installed, please uninstall it first.
-
 External dependencies
 ---------------------
 
@@ -77,6 +74,9 @@ installed with **easy_install-2.6** command as **zenoss** user.
 
 Installation
 ============
+
+If you have an old version (ZenPacks.community.PgSQLMon_ODBC) of this ZenPack
+installed, please uninstall it first.
 
 Normal Installation (packaged egg)
 ----------------------------------
@@ -130,6 +130,8 @@ Monitoring Templates
 
 Performance graphs
 ------------------
+
+**PgSqlDatabase**
 
 - PostgreSQL Database Size
 - PostgreSQL Connections
