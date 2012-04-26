@@ -12,9 +12,9 @@ __doc__="""PgSqlDatabaseMap.py
 
 PgSqlDatabaseMap maps the PostgreSQL Databases table to Database objects
 
-$Id: PgSqlDatabaseMap.py,v 1.8 2012/04/25 01:08:18 egor Exp $"""
+$Id: PgSqlDatabaseMap.py,v 1.9 2012/04/26 23:14:12 egor Exp $"""
 
-__version__ = "$Revision: 1.8 $"[11:-2]
+__version__ = "$Revision: 1.9 $"[11:-2]
 
 from Products.ZenModel.ZenPackPersistence import ZenPackPersistence
 from Products.DataCollector.plugins.DataMaps import MultiArgs
@@ -72,7 +72,7 @@ class PgSqlDatabaseMap(ZenPackPersistence, SQLPlugin):
                 None,
                 cs,
                 {
-                    'product':'setProductKey',
+                    'setProductKey':'product',
                     'port':'port',
                 })
             tasks["db_%s"%inst] = (
@@ -83,11 +83,11 @@ class PgSqlDatabaseMap(ZenPackPersistence, SQLPlugin):
                     'dbname': 'dbname',
                     'contact':'contact',
                     'version':'version',
-                    'blocksize':'blockSize',
-                    'setdbsrvinst':'setDBSrvInst',
-                    'allowconn':'allowConn',
+                    'blockSize':'blocksize',
+                    'setDBSrvInst':'setdbsrvinst',
+                    'allowConn':'allowconn',
                     'type':'type',
-                    'totalblocks': 'totalBlocks',
+                    'totalBlocks': 'totalblocks',
                 })
         return tasks
 
