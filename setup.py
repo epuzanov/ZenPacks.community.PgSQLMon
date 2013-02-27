@@ -3,9 +3,9 @@
 # or saved.  Do not modify them directly here.
 # NB: PACKAGES is deprecated
 NAME = "ZenPacks.community.PgSQLMon"
-VERSION = "2.5"
+VERSION = "2.6"
 AUTHOR = "Egor Puzanov"
-LICENSE = ""
+LICENSE = "GPLv2"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.community']
 PACKAGES = ['ZenPacks', 'ZenPacks.community', 'ZenPacks.community.PgSQLMon']
 INSTALL_REQUIRES = ['ZenPacks.community.RDBMS>=2.3', 'ZenPacks.community.SQLDataSource>=2.0']

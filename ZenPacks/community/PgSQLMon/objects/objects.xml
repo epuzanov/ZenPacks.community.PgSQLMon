@@ -1170,22 +1170,40 @@ AVERAGE
 <!-- ('', 'zport', 'dmd', 'Events', 'Status', 'PgSqlDatabase') -->
 <object id='/zport/dmd/Events/Status/PgSqlDatabase' module='Products.ZenEvents.EventClass' class='EventClass'>
 <property type="text" id="transform" mode="w" >
-status = evt.severity and 5 or 2
-for comp in device.os.softwaredatabases():
-    if comp.id != evt.component: continue
-    if comp.status != status:
-        comp.status = status
-        txnCommit()
-    break
+try: comp = component
+except NameError:
+    from ZODB.transact import transact
+    for comp in device.os.softwaredatabases():
+        if comp.id == evt.component: break
+    else:
+        comp = None
+if comp is not None:
+    status = evt.severity and 5 or 2
+    if comp.status == status:
+        evt._action = 'drop'
+    else:
+        @transact
+        def updateDb():
+            comp.status = status
+        updateDb()
 </property>
 <property type="text" id="transform" mode="w" >
-status = evt.severity and 5 or 2
-for comp in device.os.softwaredatabases():
-    if comp.id != evt.component: continue
-    if comp.status != status:
-        comp.status = status
-        txnCommit()
-    break
+try: comp = component
+except NameError:
+    from ZODB.transact import transact
+    for comp in device.os.softwaredatabases():
+        if comp.id == evt.component: break
+    else:
+        comp = None
+if comp is not None:
+    status = evt.severity and 5 or 2
+    if comp.status == status:
+        evt._action = 'drop'
+    else:
+        @transact
+        def updateDb():
+            comp.status = status
+        updateDb()
 </property>
 </object>
 </objects>
